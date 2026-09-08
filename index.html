@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>簡単！張り紙メーカー v0.9.1 - 自動張り紙作成・印刷ツール</title>
+  <meta name="description" content="サイズ・色・トンボのありなしを選んで、展示会や店舗、オフィス用の張り紙を自動作成・印刷・高解像度ダウンロードできるWebサービス">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- 1. ヘッダー -->
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-icon">📜</div>
+      <h1 class="brand-title">簡単！張り紙メーカー<span class="badge-beta">v0.9.1</span></h1>
+    </div>
+    <div class="header-actions">
+      <button id="btnPrint" class="btn btn-secondary" title="直接印刷">
+        🖨️ 印刷プレビュー
+      </button>
+      <button id="btnDownloadPDF" class="btn btn-secondary" title="PDF出力">
+        📄 PDF保存
+      </button>
+      <button id="btnDownloadPNG" class="btn btn-primary" title="高解像度PNGでダウンロード">
+        ⬇️ PNGダウンロード (300DPI)
+      </button>
+    </div>
+  </header>
+
+  <!-- 2. メインコンテナ -->
+  <div class="app-container">
+    
+    <!-- 左側：コントロールパネル -->
+    <aside class="control-sidebar">
+      <!-- タブナビゲーション -->
+      <nav class="tab-nav">
+        <button class="tab-btn active" data-tab="tab-presets">
+          <span>⚡ プリセット</span>
+        </button>
+        <button class="tab-btn" data-tab="tab-text">
+          <span>✏️ 文言・ロゴ</span>
+        </button>
+        <button class="tab-btn" data-tab="tab-style">
+          <span>🎨 用紙・カラー</span>
+        </button>
+        <button class="tab-btn" data-tab="tab-crop">
+          <span>✂️ トンボ設定</span>
+        </button>
+      </nav>
+
+      <!-- タブコンテンツエリア -->
+      <div class="tab-content">
+        
+        <!-- タブ1: プリセット選択 (11種) -->
+        <div id="tab-presets" class="tab-pane active">
+          <div class="section-title">ワンクリックプリセット</div>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 16px;">
+            用途に合わせた定番デザインを選択すると、タイトルとサブタイトルが自動入力されます。
+          </p>
+          <div class="preset-grid" id="presetGrid">
+            <!-- JavaScriptで動的生成 -->
+          </div>
+        </div>
+
+        <!-- タブ2: 文言・ロゴ編集 -->
+        <div id="tab-text" class="tab-pane">
+          <div class="section-title">文字・テキスト編集</div>
+          
+          <div class="form-group">
+            <label class="form-label" for="inputTitle">メイン文言（日本語）</label>
+            <textarea id="inputTitle" class="form-textarea" rows="2" placeholder="例: OEM受注可能&#10;張り紙印刷">OEM受注可能</textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inputSubtitle">サブ文言（英語 / 補足）</label>
+            <textarea id="inputSubtitle" class="form-textarea" rows="2" placeholder="例: Take Orders for OEM">Take Orders for OEM</textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">メイン文字サイズ: <span id="valTitleSize">100</span>%</label>
+            <input type="range" id="sliderTitleSize" class="form-input" min="50" max="180" value="100">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">サブ文字サイズ: <span id="valSubtitleSize">70</span>%</label>
+            <input type="range" id="sliderSubtitleSize" class="form-input" min="30" max="150" value="70">
+          </div>
+
+          <div class="toggle-group">
+            <span class="form-label" style="margin: 0;">中央区切り線（白線）</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="chkDivider" checked>
+              <span class="slider-toggle"></span>
+            </label>
+          </div>
+
+          <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 24px 0;">
+
+          <div class="section-title">ロゴ追加・配置</div>
+          <div class="form-group">
+            <label class="form-label" for="inputLogo">ロゴ画像ファイルアップロード</label>
+            <input type="file" id="inputLogo" class="form-input" accept="image/*">
+            <div id="logoPreviewName" style="font-size: 0.75rem; color: var(--primary-accent); margin-top: 6px;"></div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="selectLogoPos">ロゴの配置位置</label>
+            <select id="selectLogoPos" class="form-select">
+              <option value="top">上部（タイトル上）</option>
+              <option value="bottom">下部（フッター）</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">ロゴスケール: <span id="valLogoScale">100</span>%</label>
+            <input type="range" id="sliderLogoScale" class="form-input" min="30" max="200" value="100">
+          </div>
+
+          <button id="btnRemoveLogo" class="btn btn-secondary" style="width: 100%; font-size: 0.8rem;" disabled>
+            🗑️ ロゴを削除
+          </button>
+        </div>
+
+        <!-- タブ3: 用紙・カラー -->
+        <div id="tab-style" class="tab-pane">
+          <div class="section-title">用紙設定</div>
+          
+          <div class="form-group">
+            <label class="form-label" for="selectPaperSize">用紙サイズ</label>
+            <select id="selectPaperSize" class="form-select">
+              <option value="A4" selected>A4 (297 × 210 mm)</option>
+              <option value="A3">A3 (420 × 297 mm)</option>
+              <option value="B4">B4 (364 × 257 mm)</option>
+              <option value="B5">B5 (257 × 182 mm)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">用紙の向き</label>
+            <div style="display: flex; gap: 10px;">
+              <button id="btnOrientationLandscape" class="btn btn-secondary active" style="flex: 1;">
+                ↔️ 横向き (Landscape)
+              </button>
+              <button id="btnOrientationPortrait" class="btn btn-secondary" style="flex: 1;">
+                ↕️ 縦向き (Portrait)
+              </button>
+            </div>
+          </div>
+
+          <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 24px 0;">
+
+          <div class="section-title">カラーパレット</div>
+          <div class="color-grid" id="colorGrid">
+            <!-- JavaScriptで動的生成 -->
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px;">
+            <div class="form-group">
+              <label class="form-label" for="pickerBg">背景色カスタム</label>
+              <input type="color" id="pickerBg" value="#E53935" style="width: 100%; height: 40px; cursor: pointer; border-radius: var(--radius-sm); border: none; background: transparent;">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="pickerText">文字色カスタム</label>
+              <input type="color" id="pickerText" value="#FFFFFF" style="width: 100%; height: 40px; cursor: pointer; border-radius: var(--radius-sm); border: none; background: transparent;">
+            </div>
+          </div>
+
+          <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 24px 0;">
+
+          <div class="section-title">オリジナル背景画像</div>
+          <div class="form-group">
+            <label class="form-label" for="inputBgImg">背景画像ファイルアップロード</label>
+            <input type="file" id="inputBgImg" class="form-input" accept="image/*">
+            <div id="bgImgPreviewName" style="font-size: 0.75rem; color: var(--primary-accent); margin-top: 6px;"></div>
+          </div>
+          <button id="btnRemoveBgImg" class="btn btn-secondary" style="width: 100%; font-size: 0.8rem;" disabled>
+            🗑️ 背景画像を削除
+          </button>
+        </div>
+
+        <!-- タブ4: トンボ設定 -->
+        <div id="tab-crop" class="tab-pane">
+          <div class="section-title">トンボ（トリムマーク）設定</div>
+          
+          <div class="toggle-group">
+            <div>
+              <div class="form-label" style="margin: 0;">トンボ（トリムマーク）を表示</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">必要な場合のみチェックをオンにしてください</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="chkCropMarks">
+              <span class="slider-toggle"></span>
+            </label>
+          </div>
+
+          <div style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: var(--radius-md); padding: 14px; margin-top: 16px;">
+            <div style="font-weight: 700; font-size: 0.85rem; color: var(--primary-accent); margin-bottom: 6px;">
+              ℹ️ トンボ（Crop Marks）について
+            </div>
+            <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.5;">
+              「トンボあり」を選択すると、印刷・断裁用のコーナーマークおよび3mm塗りたし（Bleed）エリアが自動付与されます。<br>
+              オフィス用プリンターでそのままフチなし印刷したい場合は「トンボなし」を推奨します。
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </aside>
+
+    <!-- 右側：プレビューワークスペース -->
+    <main class="preview-workspace">
+      <!-- ツールバー -->
+      <div class="workspace-toolbar">
+        <div class="zoom-controls">
+          <button id="btnZoomOut" class="tool-btn" title="縮小">-</button>
+          <span id="txtZoomLevel" class="zoom-level">60%</span>
+          <button id="btnZoomIn" class="tool-btn" title="拡大">+</button>
+          <button id="btnZoomReset" class="tool-btn" title="リセット" style="width: auto; padding: 0 10px;">フィット</button>
+        </div>
+        <div id="badgePaperSize" class="paper-info-badge">
+          A4 (横) 297 × 210 mm
+        </div>
+      </div>
+
+      <!-- キャンバスビューポート -->
+      <div class="canvas-viewport" id="canvasViewport">
+        <div class="canvas-wrapper" id="canvasWrapper">
+          <canvas id="posterCanvas"></canvas>
+        </div>
+      </div>
+    </main>
+
+  </div>
+
+  <!-- アプリケーションスクリプト (直開き file:// および Webサーバーの両方で高速動作) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="js/presets.js"></script>
+  <script src="js/exporter.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
